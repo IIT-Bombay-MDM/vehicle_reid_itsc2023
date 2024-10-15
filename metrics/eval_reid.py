@@ -4,13 +4,16 @@
 @contact: sherlockliao01@gmail.com
 """
 
+import time
+from multiprocessing import Pool
+
 import numpy as np
 from tqdm import tqdm
-from multiprocessing import Pool
-import time
 
 
-def eval_func(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remove_junk=True):
+def eval_func(
+    distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remove_junk=True
+):
     """Evaluation with veri776 metric
     Key: for each query identity, its gallery images from the same camera view are discarded.
 
@@ -30,8 +33,10 @@ def eval_func(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remove_j
         print("Note: number of gallery samples is quite small, got {}".format(num_g))
     all_cmc = []
     all_AP = []
-    num_valid_q = 0.  # number of valid query
-    for q_idx in tqdm(range(num_q), desc='Computing CMC and mAP', bar_format='{l_bar}{bar:20}{r_bar}'):
+    num_valid_q = 0.0  # number of valid query
+    for q_idx in tqdm(
+        range(num_q), desc="Computing CMC and mAP", bar_format="{l_bar}{bar:20}{r_bar}"
+    ):
         # get query pid and camid
         q_pid = q_pids[q_idx]
 
@@ -46,7 +51,7 @@ def eval_func(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remove_j
 
         # compute cmc curve
         # binary vector, positions with value 1 are correct matches
-    #     orig_cmc = matches[q_idx][keep]
+        #     orig_cmc = matches[q_idx][keep]
         orig_cmc = (g_pids[order] == q_pid).astype(np.int32)[keep]
         if not np.any(orig_cmc):
             # this condition is true when query identity does not appear in gallery
@@ -56,13 +61,13 @@ def eval_func(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remove_j
         cmc[cmc > 1] = 1
 
         all_cmc.append(cmc[:max_rank])
-        num_valid_q += 1.
+        num_valid_q += 1.0
 
         # compute average precision
         # reference: https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Average_precision
         num_rel = orig_cmc.sum()
         tmp_cmc = orig_cmc.cumsum()
-        tmp_cmc = [x / (i + 1.) for i, x in enumerate(tmp_cmc)]
+        tmp_cmc = [x / (i + 1.0) for i, x in enumerate(tmp_cmc)]
         tmp_cmc = np.asarray(tmp_cmc) * orig_cmc
         AP = tmp_cmc.sum() / num_rel
         all_AP.append(AP)
@@ -76,7 +81,9 @@ def eval_func(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remove_j
     return all_cmc, mAP
 
 
-def eval_func_mp(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remove_junk=True):
+def eval_func_mp(
+    distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remove_junk=True
+):
     """
     Multiprocess version for eval func
     """
@@ -87,30 +94,34 @@ def eval_func_mp(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remov
         print("Note: number of gallery samples is quite small, got {}".format(num_g))
     all_cmc = []
     all_AP = []
-    print('Generating worker pools')
+    print("Generating worker pools")
     t1 = time.time()
     pool = Pool(30)
-    res = pool.imap(worker, [
-        (
-            q_pids[q_idx],
-            q_camids[q_idx],
-            g_pids,
-            g_camids,
-            distmat[q_idx],
-            max_rank,
-            remove_junk
-        ) for q_idx in range(num_q)
-    ], chunksize=32)
+    res = pool.imap(
+        worker,
+        [
+            (
+                q_pids[q_idx],
+                q_camids[q_idx],
+                g_pids,
+                g_camids,
+                distmat[q_idx],
+                max_rank,
+                remove_junk,
+            )
+            for q_idx in range(num_q)
+        ],
+        chunksize=32,
+    )
     print(time.time() - t1)
 
     for r in tqdm(res, total=num_q):
         all_AP.append(r[0])
         all_cmc.append(r[1])
 
-
     # num_valid_q = 0.  # number of valid query
     # for q_idx in tqdm(range(num_q), desc='Calc cmc and mAP'):
-        # get query pid and camid
+    # get query pid and camid
     # assert num_valid_q > 0, "Error: all query identities do not appear in gallery"
 
     all_cmc = np.asarray(all_cmc).astype(np.float32)
@@ -118,6 +129,7 @@ def eval_func_mp(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remov
     mAP = np.mean(all_AP)
 
     return all_cmc, mAP, all_AP
+
 
 def worker(args):
     q_pid, q_camid, g_pids, g_camids, dist_vec, max_rank, remove_junk = args
@@ -131,12 +143,15 @@ def worker(args):
 
     # compute cmc curve
     # binary vector, positions with value 1 are correct matches
-#     orig_cmc = matches[q_idx][keep]
+    #     orig_cmc = matches[q_idx][keep]
     orig_cmc = (g_pids[order] == q_pid).astype(np.int32)[keep]
     AP, cmc = calc_AP(orig_cmc)
     return AP, cmc[:max_rank]
 
-def eval_func_th(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remove_junk=True):
+
+def eval_func_th(
+    distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remove_junk=True
+):
     """Evaluation with veri776 metric
     Key: for each query identity, its gallery images from the same camera view are discarded.
 
@@ -156,8 +171,8 @@ def eval_func_th(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remov
         print("Note: number of gallery samples is quite small, got {}".format(num_g))
     all_cmc = []
     all_AP = []
-    num_valid_q = 0.  # number of valid query
-    for q_idx in tqdm(range(num_q), desc='Calc cmc and mAP'):
+    num_valid_q = 0.0  # number of valid query
+    for q_idx in tqdm(range(num_q), desc="Calc cmc and mAP"):
         # get query pid and camid
         q_pid = q_pids[q_idx]
 
@@ -172,7 +187,7 @@ def eval_func_th(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remov
 
         # compute cmc curve
         # binary vector, positions with value 1 are correct matches
-    #     orig_cmc = matches[q_idx][keep]
+        #     orig_cmc = matches[q_idx][keep]
         orig_cmc = (g_pids[order] == q_pid).astype(np.int32)[keep]
         if not np.any(orig_cmc):
             # this condition is true when query identity does not appear in gallery
@@ -182,13 +197,13 @@ def eval_func_th(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remov
         cmc[cmc > 1] = 1
 
         all_cmc.append(cmc[:max_rank])
-        num_valid_q += 1.
+        num_valid_q += 1.0
 
         # compute average precision
         # reference: https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Average_precision
         num_rel = orig_cmc.sum()
         tmp_cmc = orig_cmc.cumsum()
-        tmp_cmc = [x / (i + 1.) for i, x in enumerate(tmp_cmc)]
+        tmp_cmc = [x / (i + 1.0) for i, x in enumerate(tmp_cmc)]
         tmp_cmc = np.asarray(tmp_cmc) * orig_cmc
         AP = tmp_cmc.sum() / num_rel
         all_AP.append(AP)
@@ -200,6 +215,7 @@ def eval_func_th(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, remov
     mAP = np.mean(all_AP)
 
     return all_cmc, mAP
+
 
 def calc_AP(orig_cmc):
     """Evaluation
@@ -218,10 +234,12 @@ def calc_AP(orig_cmc):
     # reference: https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Average_precision
     num_rel = orig_cmc.sum()
     tmp_cmc = orig_cmc.cumsum()
-    tmp_cmc = [x / (i + 1.) for i, x in enumerate(tmp_cmc)]  # Precision
+    tmp_cmc = [x / (i + 1.0) for i, x in enumerate(tmp_cmc)]  # Precision
     tmp_cmc = np.asarray(tmp_cmc) * orig_cmc  # on Recall changed
     AP = tmp_cmc.sum() / num_rel
     return AP, cmc
+
+
 '''
 def get_expectation_of_AP(N=10, T=3):
     """

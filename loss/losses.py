@@ -1,15 +1,17 @@
 import torch
 import torch.nn as nn
-import numpy as np
 import torch.nn.functional as F
 
 
 def softmax_weights(dist, mask):
     max_v = torch.max(dist * mask, dim=1, keepdim=True)[0]
     diff = dist - max_v
-    Z = torch.sum(torch.exp(diff) * mask, dim=1, keepdim=True) + 1e-6  # avoid division by zero
+    Z = (
+        torch.sum(torch.exp(diff) * mask, dim=1, keepdim=True) + 1e-6
+    )  # avoid division by zero
     W = torch.exp(diff) * mask / Z
     return W
+
 
 def hard_example_mining_fastreid(dist_mat, is_pos, is_neg):
     """For each anchor, find the hardest positive and negative sample.
@@ -79,15 +81,18 @@ class triplet_loss_fastreid(nn.Module):
     r"""Modified from Tong Xiao's open-reid (https://github.com/Cysu/open-reid).
     Related Triplet Loss theory can be found in paper 'In Defense of the Triplet
     Loss for Person Re-Identification'."""
+
     def __init__(self, margin, norm_feat, hard_mining) -> None:
         super().__init__()
         self.margin = margin
-        self.norm_feat=norm_feat
+        self.norm_feat = norm_feat
         self.hard_mining = hard_mining
 
     def forward(self, embedding, targets):
         if self.norm_feat:
-            dist_mat = euclidean_dist_fast_reid(F.normalize(embedding), F.normalize(embedding))
+            dist_mat = euclidean_dist_fast_reid(
+                F.normalize(embedding), F.normalize(embedding)
+            )
             # dist_mat = torch.matmul(F.normalize(embedding), F.normalize(embedding).T)
         else:
             dist_mat = euclidean_dist_fast_reid(embedding, embedding)
@@ -101,8 +106,18 @@ class triplet_loss_fastreid(nn.Module):
         #     all_targets = targets
 
         N = dist_mat.size(0)
-        is_pos = targets.view(N, 1).expand(N, N).eq(targets.view(N, 1).expand(N, N).t()).float()
-        is_neg = targets.view(N, 1).expand(N, N).ne(targets.view(N, 1).expand(N, N).t()).float()
+        is_pos = (
+            targets.view(N, 1)
+            .expand(N, N)
+            .eq(targets.view(N, 1).expand(N, N).t())
+            .float()
+        )
+        is_neg = (
+            targets.view(N, 1)
+            .expand(N, N)
+            .ne(targets.view(N, 1).expand(N, N).t())
+            .float()
+        )
 
         if self.hard_mining:
             dist_ap, dist_an = hard_example_mining_fastreid(dist_mat, is_pos, is_neg)
@@ -116,7 +131,8 @@ class triplet_loss_fastreid(nn.Module):
         else:
             loss = F.soft_margin_loss(dist_an - dist_ap, y)
             # fmt: off
-            if loss == float('Inf'): loss = F.margin_ranking_loss(dist_an, dist_ap, y, margin=0.3)
+            if loss == float('Inf'):
+                loss = F.margin_ranking_loss(dist_an, dist_ap, y, margin=0.3)
             # fmt: on
 
         return loss

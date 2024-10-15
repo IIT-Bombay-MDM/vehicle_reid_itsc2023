@@ -1,14 +1,14 @@
 import copy
+import os
 import random
-import torch
 from collections import defaultdict
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+import torch
+import torchvision
 from torch.utils.data import Dataset
 from torch.utils.data.sampler import Sampler
-from tqdm import tqdm
-import os
-import torchvision
 
 
 def train_collate_fn(batch):
@@ -17,9 +17,9 @@ def train_collate_fn(batch):
     viewids = torch.tensor(viewids, dtype=torch.int64)
     camids = torch.tensor(camids, dtype=torch.int64)
 
-    return torch.stack(imgs, dim=0), pids, camids, viewids 
+    return torch.stack(imgs, dim=0), pids, camids, viewids
 
-        
+
 class CustomDataSet4VERIWILD(Dataset):
     """Face Landmarks dataset."""
 
@@ -31,13 +31,13 @@ class CustomDataSet4VERIWILD(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.data_info = pd.read_csv(csv_file, sep=' ', header=None)
+        self.data_info = pd.read_csv(csv_file, sep=" ", header=None)
         self.with_view = with_view
         self.root_dir = root_dir
         self.transform = transform
 
     def get_class(self, idx):
-        return self.data_info.iloc[idx, 1]    
+        return self.data_info.iloc[idx, 1]
 
     def __len__(self):
         return len(self.data_info)
@@ -46,24 +46,20 @@ class CustomDataSet4VERIWILD(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir,
-                                self.data_info.iloc[idx, 0])
+        img_name = os.path.join(self.root_dir, self.data_info.iloc[idx, 0])
         image = torchvision.io.read_image(img_name)
 
         vid = self.data_info.iloc[idx, 1]
         camid = self.data_info.iloc[idx, 2]
-        
-        view_id = 0 #self.data_info.iloc[idx, 3]
+
+        view_id = 0  # self.data_info.iloc[idx, 3]
 
         if self.transform:
-            img = self.transform((image.type(torch.FloatTensor))/255.0)
-        if self.with_view :
+            img = self.transform((image.type(torch.FloatTensor)) / 255.0)
+        if self.with_view:
             return img, vid, camid, view_id
         else:
             return img, vid, camid, 0
-
-
-
 
 
 class CustomDataSet4VERIWILDv2(Dataset):
@@ -77,13 +73,13 @@ class CustomDataSet4VERIWILDv2(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.data_info = pd.read_csv(csv_file, sep=' ', header=None)
+        self.data_info = pd.read_csv(csv_file, sep=" ", header=None)
         self.with_view = with_view
         self.root_dir = root_dir
         self.transform = transform
 
     def get_class(self, idx):
-        return self.data_info.iloc[idx, 1]    
+        return self.data_info.iloc[idx, 1]
 
     def __len__(self):
         return len(self.data_info)
@@ -92,21 +88,19 @@ class CustomDataSet4VERIWILDv2(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir,
-                                self.data_info.iloc[idx, 0])
+        img_name = os.path.join(self.root_dir, self.data_info.iloc[idx, 0])
         image = torchvision.io.read_image(img_name)
 
         vid = self.data_info.iloc[idx, 1]
-        camid = 0 #self.data_info.iloc[idx, 2]
-        view_id = 0 # = self.data_info.iloc[idx, 3]
+        camid = 0  # self.data_info.iloc[idx, 2]
+        view_id = 0  # = self.data_info.iloc[idx, 3]
 
         if self.transform:
-            img = self.transform((image.type(torch.FloatTensor))/255.0)
+            img = self.transform((image.type(torch.FloatTensor)) / 255.0)
         if self.with_view:
             return img, vid, camid, view_id
         else:
             return img, vid, camid
-
 
 
 class RandomIdentitySampler(Sampler):
@@ -171,7 +165,7 @@ class RandomIdentitySampler(Sampler):
     def __len__(self):
         return self.length
 
-        
+
 class CustomDataSet4Market1501(Dataset):
     """Face Landmarks dataset."""
 
@@ -183,31 +177,31 @@ class CustomDataSet4Market1501(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        #self.data_info = pd.read_xml(csv_file, sep=' ', header=None)
+        # self.data_info = pd.read_xml(csv_file, sep=' ', header=None)
         reader = open(image_list)
         lines = reader.readlines()
         self.data_info = []
         self.names = []
         self.labels = []
         self.cams = []
-        if is_train == True:
+        if is_train:
             for line in lines:
                 line = line.strip()
                 self.names.append(line)
-                self.labels.append(line.split('_')[0])
-                self.cams.append(line.split('_')[1])  
+                self.labels.append(line.split("_")[0])
+                self.cams.append(line.split("_")[1])
             labels = sorted(set(self.labels))
             for pid, id in enumerate(labels):
-                idxs = [i for i, v in enumerate(self.labels) if v==id] 
+                idxs = [i for i, v in enumerate(self.labels) if v == id]
                 for j in idxs:
                     self.labels[j] = pid
         else:
             for line in lines:
                 line = line.strip()
                 self.names.append(line)
-                self.labels.append(line.split('_')[0])
-                self.cams.append(line.split('_')[1])      
-        self.data_info = self.names        
+                self.labels.append(line.split("_")[0])
+                self.cams.append(line.split("_")[1])
+        self.data_info = self.names
         self.root_dir = root_dir
         self.transform = transform
 
@@ -221,20 +215,15 @@ class CustomDataSet4Market1501(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir,
-                                self.names[idx])
+        img_name = os.path.join(self.root_dir, self.names[idx])
         image = torchvision.io.read_image(img_name)
         vid = np.int64(self.labels[idx])
-        camid = np.int64(self.cams[idx].split('s')[0].replace('c', ""))
-
+        camid = np.int64(self.cams[idx].split("s")[0].replace("c", ""))
 
         if self.transform:
-            img = self.transform((image.type(torch.FloatTensor))/255.0)
+            img = self.transform((image.type(torch.FloatTensor)) / 255.0)
 
-        return img, vid, camid     
-
-       
- 
+        return img, vid, camid
 
 
 class CustomDataSet4Veri776(Dataset):
@@ -248,22 +237,22 @@ class CustomDataSet4Veri776(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        #self.data_info = pd.read_xml(csv_file, sep=' ', header=None)
+        # self.data_info = pd.read_xml(csv_file, sep=' ', header=None)
         reader = open(image_list)
         lines = reader.readlines()
         self.data_info = []
         self.names = []
         self.labels = []
         self.cams = []
-        if is_train == True:
+        if is_train:
             for line in lines:
                 line = line.strip()
                 self.names.append(line)
-                self.labels.append(line.split('_')[0])
-                self.cams.append(line.split('_')[1])     
+                self.labels.append(line.split("_")[0])
+                self.cams.append(line.split("_")[1])
             labels = sorted(set(self.labels))
             for pid, id in enumerate(labels):
-                idxs = [i for i, v in enumerate(self.labels) if v==id] 
+                idxs = [i for i, v in enumerate(self.labels) if v == id]
                 for j in idxs:
                     self.labels[j] = pid
                 # print(pid, id, 'debug')
@@ -271,9 +260,9 @@ class CustomDataSet4Veri776(Dataset):
             for line in lines:
                 line = line.strip()
                 self.names.append(line)
-                self.labels.append(line.split('_')[0])
-                self.cams.append(line.split('_')[1])      
-        self.data_info = self.names        
+                self.labels.append(line.split("_")[0])
+                self.cams.append(line.split("_")[1])
+        self.data_info = self.names
         self.root_dir = root_dir
         self.transform = transform
 
@@ -287,27 +276,29 @@ class CustomDataSet4Veri776(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir,
-                                self.names[idx])
+        img_name = os.path.join(self.root_dir, self.names[idx])
         image = torchvision.io.read_image(img_name)
         vid = np.int64(self.labels[idx])
-        camid = np.int64(self.cams[idx].replace('c', ""))
-
+        camid = np.int64(self.cams[idx].replace("c", ""))
 
         if self.transform:
-            img = self.transform((image.type(torch.FloatTensor))/255.0)
+            img = self.transform((image.type(torch.FloatTensor)) / 255.0)
 
-        return img, vid, camid, 0 
-
-
-
-
+        return img, vid, camid, 0
 
 
 class CustomDataSet4Veri776_withviewpont(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, image_list, root_dir, viewpoint_train, viewpoint_test, is_train=True, transform=None):
+    def __init__(
+        self,
+        image_list,
+        root_dir,
+        viewpoint_train,
+        viewpoint_test,
+        is_train=True,
+        transform=None,
+    ):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -316,8 +307,8 @@ class CustomDataSet4Veri776_withviewpont(Dataset):
                 on a sample.
         """
 
-        self.viewpoint_train = pd.read_csv(viewpoint_train, sep=' ', header = None)
-        self.viewpoint_test = pd.read_csv(viewpoint_test, sep=' ', header = None)
+        self.viewpoint_train = pd.read_csv(viewpoint_train, sep=" ", header=None)
+        self.viewpoint_test = pd.read_csv(viewpoint_test, sep=" ", header=None)
         reader = open(image_list)
         lines = reader.readlines()
         self.data_info = []
@@ -326,39 +317,48 @@ class CustomDataSet4Veri776_withviewpont(Dataset):
         self.cams = []
         self.view = []
         conta_missing_images = 0
-        if is_train == True:
+        if is_train:
             for line in lines:
                 line = line.strip()
                 view = self.viewpoint_train[self.viewpoint_train.iloc[:, 0] == line]
-                if self.viewpoint_train[self.viewpoint_train.iloc[:, 0] == line].shape[0] ==0:
+                if (
+                    self.viewpoint_train[self.viewpoint_train.iloc[:, 0] == line].shape[
+                        0
+                    ]
+                    == 0
+                ):
                     conta_missing_images += 1
                     continue
                 view = int(view.iloc[0, -1])
                 self.view.append(view)
                 self.names.append(line)
-                self.labels.append(line.split('_')[0])
-                self.cams.append(line.split('_')[1]) 
+                self.labels.append(line.split("_")[0])
+                self.cams.append(line.split("_")[1])
             labels = sorted(set(self.labels))
             for pid, id in enumerate(labels):
-                idxs = [i for i, v in enumerate(self.labels) if v==id] 
+                idxs = [i for i, v in enumerate(self.labels) if v == id]
                 for j in idxs:
                     self.labels[j] = pid
         else:
             for line in lines:
                 line = line.strip()
                 view = self.viewpoint_test[self.viewpoint_test.iloc[:, 0] == line]
-                if self.viewpoint_test[self.viewpoint_test.iloc[:, 0] == line].shape[0] == 0:
+                if (
+                    self.viewpoint_test[self.viewpoint_test.iloc[:, 0] == line].shape[0]
+                    == 0
+                ):
                     conta_missing_images += 1
                     continue
                 view = int(view.iloc[0, -1])
                 self.view.append(view)
                 self.names.append(line)
-                self.labels.append(line.split('_')[0])
-                self.cams.append(line.split('_')[1])      
-        self.data_info = self.names        
+                self.labels.append(line.split("_")[0])
+                self.cams.append(line.split("_")[1])
+        self.data_info = self.names
         self.root_dir = root_dir
         self.transform = transform
-        print('Missed viewpoint for ', conta_missing_images, ' images!')
+        print("Missed viewpoint for ", conta_missing_images, " images!")
+
     def get_class(self, idx):
         return self.labels[idx]
 
@@ -369,21 +369,22 @@ class CustomDataSet4Veri776_withviewpont(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir,
-                                self.names[idx])
+        img_name = os.path.join(self.root_dir, self.names[idx])
         image = torchvision.io.read_image(img_name)
         vid = np.int64(self.labels[idx])
-        camid = np.int64(self.cams[idx].replace('c', ""))-1
+        camid = np.int64(self.cams[idx].replace("c", "")) - 1
         viewid = np.int64(self.view[idx])
 
-
         if self.transform:
-            img = self.transform((image.type(torch.FloatTensor))/255.0)
+            img = self.transform((image.type(torch.FloatTensor)) / 255.0)
 
-        return img, vid, camid, viewid     
+        return img, vid, camid, viewid
+
 
 class CustomDataSet4VehicleID_Random(Dataset):
-    def __init__(self, lines, root_dir, is_train=True, mode=None, transform=None, teste=False):
+    def __init__(
+        self, lines, root_dir, is_train=True, mode=None, transform=None, teste=False
+    ):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -395,17 +396,17 @@ class CustomDataSet4VehicleID_Random(Dataset):
         self.names = []
         self.labels = []
         self.teste = teste
-        if is_train == True:
+        if is_train:
             for line in lines:
                 line = line.strip()
-                name = line[:7] 
+                name = line[:7]
                 vid = line[8:]
                 self.names.append(name)
-                self.labels.append(vid)   
+                self.labels.append(vid)
             labels = sorted(set(self.labels))
-            print("ncls: ",len(labels))
+            print("ncls: ", len(labels))
             for pid, id in enumerate(labels):
-                idxs = [i for i, v in enumerate(self.labels) if v==id] 
+                idxs = [i for i, v in enumerate(self.labels) if v == id]
                 for j in idxs:
                     self.labels[j] = pid
         else:
@@ -416,7 +417,7 @@ class CustomDataSet4VehicleID_Random(Dataset):
                 name = line[:7]
                 vid = line[8:]
                 # random.shuffle(dataset)
-                if mode=='g':  
+                if mode == "g":
                     if vid not in vid_container:
                         vid_container.add(vid)
                         self.names.append(name)
@@ -428,7 +429,7 @@ class CustomDataSet4VehicleID_Random(Dataset):
                         self.names.append(name)
                         self.labels.append(vid)
 
-        self.data_info = self.names        
+        self.data_info = self.names
         self.root_dir = root_dir
         self.transform = transform
 
@@ -442,22 +443,18 @@ class CustomDataSet4VehicleID_Random(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir,
-                                self.names[idx]+ ".jpg")
+        img_name = os.path.join(self.root_dir, self.names[idx] + ".jpg")
         image = torchvision.io.read_image(img_name)
         vid = np.int64(self.labels[idx])
         ### no camera information
-        camid = idx #np.int64(self.cams[idx].replace('c', ""))
+        camid = idx  # np.int64(self.cams[idx].replace('c', ""))
 
         if self.transform:
-            img = self.transform((image.type(torch.FloatTensor))/255.0)
+            img = self.transform((image.type(torch.FloatTensor)) / 255.0)
         if self.teste:
             return img, vid, camid, 0
         else:
             return img, vid, camid
-
-
-
 
 
 class CustomDataSet4VehicleID(Dataset):
@@ -474,17 +471,17 @@ class CustomDataSet4VehicleID(Dataset):
         self.data_info = []
         self.names = []
         self.labels = []
-        if is_train == True:
+        if is_train:
             for line in lines:
                 line = line.strip()
-                name = line[:7] 
+                name = line[:7]
                 vid = line[8:]
                 self.names.append(name)
-                self.labels.append(vid)   
+                self.labels.append(vid)
             labels = sorted(set(self.labels))
-            print("ncls: ",len(labels))
+            print("ncls: ", len(labels))
             for pid, id in enumerate(labels):
-                idxs = [i for i, v in enumerate(self.labels) if v==id] 
+                idxs = [i for i, v in enumerate(self.labels) if v == id]
                 for j in idxs:
                     self.labels[j] = pid
         else:
@@ -495,7 +492,7 @@ class CustomDataSet4VehicleID(Dataset):
                 name = line[:7]
                 vid = line[8:]
                 # random.shuffle(dataset)
-                if mode=='g':  
+                if mode == "g":
                     if vid not in vid_container:
                         vid_container.add(vid)
                         self.names.append(name)
@@ -507,7 +504,7 @@ class CustomDataSet4VehicleID(Dataset):
                         self.names.append(name)
                         self.labels.append(vid)
 
-        self.data_info = self.names        
+        self.data_info = self.names
         self.root_dir = root_dir
         self.transform = transform
 
@@ -521,15 +518,12 @@ class CustomDataSet4VehicleID(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir,
-                                self.names[idx]+ ".jpg")
+        img_name = os.path.join(self.root_dir, self.names[idx] + ".jpg")
         image = torchvision.io.read_image(img_name)
         vid = np.int64(self.labels[idx])
-        camid = idx #np.int64(self.cams[idx].replace('c', ""))
+        camid = idx  # np.int64(self.cams[idx].replace('c', ""))
 
         if self.transform:
-            img = self.transform((image.type(torch.FloatTensor))/255.0)
+            img = self.transform((image.type(torch.FloatTensor)) / 255.0)
 
         return img, vid, camid, 0
-
-
