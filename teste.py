@@ -105,8 +105,8 @@ def test_epoch(
     # re_escala = torchvision.transforms.Resize((256, 256), antialias=True)
 
     # if data['dataset'] == 'VERIWILD':
-    #     queries_names = np.loadtxt('/home/eurico/VERI-Wild/train_test_split/test_3000_id_query.txt', dtype='str_')
-    #     galeria_names = np.loadtxt('/home/eurico/VERI-Wild/train_test_split/test_3000_id.txt', dtype='str_')
+    #     queries_names = np.loadtxt('./datasets/VERI-Wild/train_test_split/test_3000_id_query.txt', dtype='str_')
+    #     galeria_names = np.loadtxt('./datasets/VERI-Wild/train_test_split/test_3000_id.txt', dtype='str_')
     # else:
     #     queries_names = np.loadtxt(data['query_list_file'], dtype='str_')
     #     galeria_names = np.loadtxt(data['gallery_list_file'], dtype='str_')
@@ -250,13 +250,13 @@ if __name__ == "__main__":
     if data["dataset"] == "VERIWILD":
         data["n_classes"] = 30671
         data_q = CustomDataSet4VERIWILD(
-            "/home/eurico/VERI-Wild/train_test_split/test_3000_id_query.txt",
+            "./datasets/VERI-Wild/train_test_split/test_3000_id_query.txt",
             data["ROOT_DIR"],
             transform=teste_transform,
             with_view=True,
         )
         data_g = CustomDataSet4VERIWILD(
-            "/home/eurico/VERI-Wild/train_test_split/test_3000_id.txt",
+            "./datasets/VERI-Wild/train_test_split/test_3000_id.txt",
             data["ROOT_DIR"],
             transform=teste_transform,
             with_view=True,
@@ -356,7 +356,7 @@ if __name__ == "__main__":
         list_cmc5 = []
         for i in range(10):
             reader = open(
-                "/home/eurico/VehicleID_V1.0/train_test_split/test_list_800.txt"
+                "./datasets/VehicleID_V1.0/train_test_split/test_list_800.txt"
             )
             lines = reader.readlines()
             random.shuffle(lines)

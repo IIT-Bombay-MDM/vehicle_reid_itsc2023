@@ -180,21 +180,21 @@ if __name__ == "__main__":
     #### Dataset Loading
     if data["dataset"] == "VehicleID":
         data_q = CustomDataSet4VehicleID(
-            "/home/eurico/VehicleID_V1.0/train_test_split/test_list_800.txt",
+            "./datasets/VehicleID_V1.0/train_test_split/test_list_800.txt",
             data["ROOT_DIR"],
             is_train=False,
             mode="q",
             transform=teste_transform,
         )
         data_g = CustomDataSet4VehicleID(
-            "/home/eurico/VehicleID_V1.0/train_test_split/test_list_800.txt",
+            "./datasets/VehicleID_V1.0/train_test_split/test_list_800.txt",
             data["ROOT_DIR"],
             is_train=False,
             mode="g",
             transform=teste_transform,
         )
         data_train = CustomDataSet4VehicleID(
-            "/home/eurico/VehicleID_V1.0/train_test_split/train_list.txt",
+            "./datasets/VehicleID_V1.0/train_test_split/train_list.txt",
             data["ROOT_DIR"],
             is_train=True,
             transform=train_transform,
@@ -223,19 +223,19 @@ if __name__ == "__main__":
         )
     if data["dataset"] == "VERIWILD":
         data_q = CustomDataSet4VERIWILD(
-            "/home/eurico/VERI-Wild/train_test_split/test_3000_id_query.txt",
+            "./datasets/VERI-Wild/train_test_split/test_3000_id_query.txt",
             data["ROOT_DIR"],
             transform=teste_transform,
             with_view=False,
         )
         data_g = CustomDataSet4VERIWILD(
-            "/home/eurico/VERI-Wild/train_test_split/test_3000_id.txt",
+            "./datasets/VERI-Wild/train_test_split/test_3000_id.txt",
             data["ROOT_DIR"],
             transform=teste_transform,
             with_view=False,
         )
         data_train = CustomDataSet4VERIWILD(
-            "/home/eurico/VERI-Wild/train_test_split/train_list.txt",
+            "./datasets/VERI-Wild/train_test_split/train_list.txt",
             data["ROOT_DIR"],
             transform=train_transform,
             with_view=False,
