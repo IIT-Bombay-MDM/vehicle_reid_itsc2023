@@ -156,3 +156,5 @@ logs/
 *.pt
 *.pth
 app.py
+.DS_Store
+test-results/
