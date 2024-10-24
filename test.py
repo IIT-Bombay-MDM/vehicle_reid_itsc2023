@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import random
 import shutil
@@ -41,12 +42,6 @@ def set_seed(seed):
     torch.backends.cudnn.benchmark = False
 
 
-def denormalize(tensor, mean, std, device):
-    mean = torch.tensor(mean).view(-1, 1, 1).to(device)
-    std = torch.tensor(std).view(-1, 1, 1).to(device)
-    return tensor * std + mean
-
-
 def test_single_image(
     model,
     device,
@@ -71,7 +66,7 @@ def test_single_image(
     # rejection sampling
     while True:
         test_dir = os.path.join(
-            output_dir, "test" + str(rng.integers(1000, 9999))
+            output_dir, "test_" + str(rng.integers(1000, 9999))
         )  # adjust this based on req
         if not os.path.isdir(test_dir):
             break
@@ -79,7 +74,7 @@ def test_single_image(
 
     # Inference on the query image
     with torch.no_grad():
-        query_image, q_id, cam_id, view_id = query_info
+        (query_image, q_id, cam_id, view_id), query_image_path = query_info
         query_image = query_image.unsqueeze(0).to(device)
         if scaler:
             with torch.autocast(device_type="cuda", dtype=torch.float16):
@@ -92,13 +87,9 @@ def test_single_image(
             end_vec.append(F.normalize(item))
         qf.append(torch.cat(end_vec, 1))
 
-    query_image = denormalize(
-        query_image.to(device), mean_and_std[0], mean_and_std[1], device
-    )
-    query_image_path = os.path.join(test_dir, "query_image.jpg")
-    query_image_pil = transforms.ToPILImage()(query_image.cpu().squeeze(0))
-    query_image_pil.save(query_image_path)
     del query_image
+
+    shutil.copy(query_image_path, os.path.join(test_dir, "query_image.jpg"))
 
     # Inference on gallery images
     image_paths = {}
@@ -136,16 +127,6 @@ def test_single_image(
 
             for dataset_idx in current_indices:
                 image_paths[dataset_idx] = data_g.dataset.get_image_path(dataset_idx)
-            # Save gallery images
-            # for idx in range(image.size(0)):
-            # gallery_image_path = os.path.join(
-            #     matches_dir, f"gallery_{count_imgs + idx}.jpg"
-            # )
-            # image[idx] = denormalize(
-            #     image[idx].to(device), mean_and_std[0], mean_and_std[1], device
-            # )
-            # gallery_image_pil = transforms.ToPILImage()(image[idx].cpu())
-            # gallery_image_pil.save(gallery_image_path)
 
             count_imgs += image.shape[0]
 
@@ -181,13 +162,17 @@ def test_single_image(
     sorted_indices = np.argsort(distmat[0])  # Sort by ascending distance
     top_matches_dir = os.path.join(test_dir, "top_matches")
     os.makedirs(top_matches_dir, exist_ok=True)
+    matches_dist = {}
     for rank, idx in enumerate(
         sorted_indices[:30]
     ):  # Save top 30 matches, since some are very similar
-        # match_image_path = os.path.join(matches_dir, f"gallery_{idx}.jpg")
+        matches_dist[f"rank_{rank + 1}"] = float(distmat[0][idx])
         match_image_path = image_paths[idx]
         match_save_path = os.path.join(top_matches_dir, f"rank_{rank + 1}.jpg")
         shutil.copy(match_image_path, match_save_path)
+
+    with open(os.path.join(test_dir, "distances.json"), "w") as f:
+        json.dump(matches_dist, f, indent=4)
 
     print(f"matches saved in {test_dir}")
 
@@ -282,10 +267,11 @@ if __name__ == "__main__":
     model.eval()
 
     if args.query_image_id:
+        idx = int(args.query_image_id)
         cmc, mAP = test_single_image(
             model,
             device,
-            data_q[int(args.query_image_id)],
+            (data_q[idx], data_q.get_image_path(idx)),
             data_g,
             remove_junk=False,  # todo: remove_junk=True is currently broken
             scaler=scaler,
