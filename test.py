@@ -50,7 +50,6 @@ def test_single_image(
     remove_junk=True,
     scaler=None,
     re_rank=False,
-    mean_and_std=None,
     output_dir="./results",
 ):
     model.eval()
@@ -78,9 +77,9 @@ def test_single_image(
         query_image = query_image.unsqueeze(0).to(device)
         if scaler:
             with torch.autocast(device_type="cuda", dtype=torch.float16):
-                _, _, ffs, _activations = model(query_image, cam_id, view_id)
+                _, _, ffs, _ = model(query_image, cam_id, view_id)
         else:
-            _, _, ffs, _activations = model(query_image, cam_id, view_id)
+            _, _, ffs, _ = model(query_image, cam_id, view_id)
 
         end_vec = []
         for item in ffs:
@@ -118,9 +117,8 @@ def test_single_image(
             g_camids.append(cam_id)
 
             start_idx = batch_idx * data_g.batch_size
-            end_idx = start_idx + image.size(
-                0
-            )  # Account for the last batch, which may be smaller
+            # Account for the last batch, which may be smaller
+            end_idx = start_idx + image.size(0)
 
             # Get the dataset indices for this batch
             current_indices = sampler_indices[start_idx:end_idx]
@@ -276,7 +274,6 @@ if __name__ == "__main__":
             remove_junk=False,  # todo: remove_junk=True is currently broken
             scaler=scaler,
             re_rank=args.re_rank,
-            mean_and_std=(data["n_mean"], data["n_std"]),
             output_dir=args.output_dir,
         )
     else:
