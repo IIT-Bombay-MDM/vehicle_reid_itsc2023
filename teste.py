@@ -149,8 +149,6 @@ def test_epoch(
             dataloader_g, desc="Gallery infer (%)", bar_format="{l_bar}{bar:20}{r_bar}"
         ):
             image = image.to(device)
-            print(image.size())
-            return
             if scaler:
                 with torch.autocast(device_type="cuda", dtype=torch.float16):
                     _, _, ffs, activations = model(image, cam_id, view_id)
