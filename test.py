@@ -67,8 +67,15 @@ def test_single_image(
     # Create a unique directory for the current test inside the results folder
     if not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
-    test_dir = os.path.join(output_dir, "test_" + str(np.random.randint(1000, 9999)))
-    os.makedirs(test_dir, exist_ok=True)
+    rng = np.random.default_rng()
+    # rejection sampling
+    while True:
+        test_dir = os.path.join(
+            output_dir, "test" + str(rng.integers(1000, 9999))
+        )  # adjust this based on req
+        if not os.path.isdir(test_dir):
+            break
+    os.makedirs(test_dir)
 
     # Inference on the query image
     with torch.no_grad():
@@ -94,12 +101,16 @@ def test_single_image(
     del query_image
 
     # Inference on gallery images
+    image_paths = {}
+    sampler_indices = list(data_g.sampler)
     with torch.no_grad():
         count_imgs = 0
-        matches_dir = os.path.join(test_dir, "matches")
-        os.makedirs(matches_dir, exist_ok=True)
-        for image, g_id, cam_id, view_id in tqdm(
-            dataloader_g, desc="Gallery infer (%)", bar_format="{l_bar}{bar:20}{r_bar}"
+        for batch_idx, (image, g_id, cam_id, view_id) in enumerate(
+            tqdm(
+                dataloader_g,
+                desc="Gallery infer (%)",
+                bar_format="{l_bar}{bar:20}{r_bar}",
+            )
         ):
             image = image.to(device)
             if scaler:
@@ -115,16 +126,26 @@ def test_single_image(
             g_vids.append(g_id)
             g_camids.append(cam_id)
 
+            start_idx = batch_idx * data_g.batch_size
+            end_idx = start_idx + image.size(
+                0
+            )  # Account for the last batch, which may be smaller
+
+            # Get the dataset indices for this batch
+            current_indices = sampler_indices[start_idx:end_idx]
+
+            for dataset_idx in current_indices:
+                image_paths[dataset_idx] = data_g.dataset.get_image_path(dataset_idx)
             # Save gallery images
-            for idx in range(image.size(0)):
-                gallery_image_path = os.path.join(
-                    matches_dir, f"gallery_{count_imgs + idx}.jpg"
-                )
-                image[idx] = denormalize(
-                    image[idx].to(device), mean_and_std[0], mean_and_std[1], device
-                )
-                gallery_image_pil = transforms.ToPILImage()(image[idx].cpu())
-                gallery_image_pil.save(gallery_image_path)
+            # for idx in range(image.size(0)):
+            # gallery_image_path = os.path.join(
+            #     matches_dir, f"gallery_{count_imgs + idx}.jpg"
+            # )
+            # image[idx] = denormalize(
+            #     image[idx].to(device), mean_and_std[0], mean_and_std[1], device
+            # )
+            # gallery_image_pil = transforms.ToPILImage()(image[idx].cpu())
+            # gallery_image_pil.save(gallery_image_path)
 
             count_imgs += image.shape[0]
 
@@ -160,10 +181,15 @@ def test_single_image(
     sorted_indices = np.argsort(distmat[0])  # Sort by ascending distance
     top_matches_dir = os.path.join(test_dir, "top_matches")
     os.makedirs(top_matches_dir, exist_ok=True)
-    for rank, idx in enumerate(sorted_indices[:10]):  # Save top 10 matches
-        match_image_path = os.path.join(matches_dir, f"gallery_{idx}.jpg")
+    for rank, idx in enumerate(
+        sorted_indices[:30]
+    ):  # Save top 30 matches, since some are very similar
+        # match_image_path = os.path.join(matches_dir, f"gallery_{idx}.jpg")
+        match_image_path = image_paths[idx]
         match_save_path = os.path.join(top_matches_dir, f"rank_{rank + 1}.jpg")
         shutil.copy(match_image_path, match_save_path)
+
+    print(f"matches saved in {test_dir}")
 
     return cmc, mAP
 
@@ -255,8 +281,6 @@ if __name__ == "__main__":
     model = model.to(device)
     model.eval()
 
-    print(data_q[int(args.query_image_id)][0].shape)
-
     if args.query_image_id:
         cmc, mAP = test_single_image(
             model,
@@ -271,5 +295,3 @@ if __name__ == "__main__":
         )
     else:
         print("Please provide a query image id using --query_image_id.")
-
-    print("Weights: ", path_weights)

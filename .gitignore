@@ -157,4 +157,7 @@ logs/
 *.pth
 app.py
 .DS_Store
+results/
+datasets/
+.vscode/
 test-results/

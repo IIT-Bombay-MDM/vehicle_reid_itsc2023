@@ -149,6 +149,8 @@ def test_epoch(
             dataloader_g, desc="Gallery infer (%)", bar_format="{l_bar}{bar:20}{r_bar}"
         ):
             image = image.to(device)
+            print(image.size())
+            return
             if scaler:
                 with torch.autocast(device_type="cuda", dtype=torch.float16):
                     _, _, ffs, activations = model(image, cam_id, view_id)
@@ -276,7 +278,7 @@ if __name__ == "__main__":
 
     if data["dataset"] == "VERIWILD2.0":
         data["n_classes"] = 30671
-        vw2_dir = "/mnt/DATADISK/Datasets/vehicle/VeriWild/v2.0/"
+        vw2_dir = "/mnt/DATADISK/Datasets/vehicle/VeriWild/v2.0/"  # todo: update once access granted to VeriWild
         set = "B"  # args.vw2_set A, B or All
         data_q = CustomDataSet4VERIWILDv2(
             vw2_dir + "test_split_V2/" + set + "_query.txt",

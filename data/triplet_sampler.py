@@ -39,6 +39,9 @@ class CustomDataSet4VERIWILD(Dataset):
     def get_class(self, idx):
         return self.data_info.iloc[idx, 1]
 
+    def get_image_path(self, idx):
+        return os.path.join(self.root_dir, self.data_info.iloc[idx, 0])
+
     def __len__(self):
         return len(self.data_info)
 
@@ -46,7 +49,7 @@ class CustomDataSet4VERIWILD(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir, self.data_info.iloc[idx, 0])
+        img_name = self.get_image_path(idx)
         image = torchvision.io.read_image(img_name)
 
         vid = self.data_info.iloc[idx, 1]
@@ -81,6 +84,9 @@ class CustomDataSet4VERIWILDv2(Dataset):
     def get_class(self, idx):
         return self.data_info.iloc[idx, 1]
 
+    def get_image_path(self, idx):
+        return os.path.join(self.root_dir, self.data_info.iloc[idx, 0])
+
     def __len__(self):
         return len(self.data_info)
 
@@ -88,7 +94,7 @@ class CustomDataSet4VERIWILDv2(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir, self.data_info.iloc[idx, 0])
+        img_name = self.get_image_path(idx)
         image = torchvision.io.read_image(img_name)
 
         vid = self.data_info.iloc[idx, 1]
@@ -208,6 +214,9 @@ class CustomDataSet4Market1501(Dataset):
     def get_class(self, idx):
         return self.labels[idx]
 
+    def get_image_path(self, idx):
+        return os.path.join(self.root_dir, self.names[idx])
+
     def __len__(self):
         return len(self.names)
 
@@ -215,7 +224,7 @@ class CustomDataSet4Market1501(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir, self.names[idx])
+        img_name = self.get_image_path(idx)
         image = torchvision.io.read_image(img_name)
         vid = np.int64(self.labels[idx])
         camid = np.int64(self.cams[idx].split("s")[0].replace("c", ""))
@@ -269,6 +278,9 @@ class CustomDataSet4Veri776(Dataset):
     def get_class(self, idx):
         return self.labels[idx]
 
+    def get_image_path(self, idx):
+        return os.path.join(self.root_dir, self.names[idx])
+
     def __len__(self):
         return len(self.names)
 
@@ -276,7 +288,7 @@ class CustomDataSet4Veri776(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir, self.names[idx])
+        img_name = self.get_image_path(idx)
         image = torchvision.io.read_image(img_name)
         vid = np.int64(self.labels[idx])
         camid = np.int64(self.cams[idx].replace("c", ""))
@@ -362,6 +374,9 @@ class CustomDataSet4Veri776_withviewpont(Dataset):
     def get_class(self, idx):
         return self.labels[idx]
 
+    def get_image_path(self, idx):
+        return os.path.join(self.root_dir, self.names[idx])
+
     def __len__(self):
         return len(self.names)
 
@@ -369,7 +384,7 @@ class CustomDataSet4Veri776_withviewpont(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir, self.names[idx])
+        img_name = self.get_image_path(idx)
         image = torchvision.io.read_image(img_name)
         vid = np.int64(self.labels[idx])
         camid = np.int64(self.cams[idx].replace("c", "")) - 1
@@ -436,6 +451,9 @@ class CustomDataSet4VehicleID_Random(Dataset):
     def get_class(self, idx):
         return self.labels[idx]
 
+    def get_image_path(self, idx):
+        return os.path.join(self.root_dir, self.names[idx] + ".jpg")
+
     def __len__(self):
         return len(self.names)
 
@@ -443,7 +461,7 @@ class CustomDataSet4VehicleID_Random(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir, self.names[idx] + ".jpg")
+        img_name = self.get_image_path(idx)
         image = torchvision.io.read_image(img_name)
         vid = np.int64(self.labels[idx])
         ### no camera information
@@ -511,6 +529,9 @@ class CustomDataSet4VehicleID(Dataset):
     def get_class(self, idx):
         return self.labels[idx]
 
+    def get_image_path(self, idx):
+        return os.path.join(self.root_dir, self.names[idx] + ".jpg")
+
     def __len__(self):
         return len(self.names)
 
@@ -518,7 +539,7 @@ class CustomDataSet4VehicleID(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir, self.names[idx] + ".jpg")
+        img_name = self.get_image_path(idx)
         image = torchvision.io.read_image(img_name)
         vid = np.int64(self.labels[idx])
         camid = idx  # np.int64(self.cams[idx].replace('c', ""))
