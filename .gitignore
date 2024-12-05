@@ -161,3 +161,4 @@ results/
 datasets/
 .vscode/
 test-results/
+logs.zip
