@@ -324,6 +324,7 @@ if __name__ == "__main__":
         print("added all embeddings to index")
         db.write_index()
 
+    # uncomment this to test for a single image
     # (query_image, q_id, q_cam_id, q_view_id) = data_q[int(args.query_image_id)]
     # image = query_image.unsqueeze(0).to(device)
     # if scaler:
