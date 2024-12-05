@@ -377,6 +377,15 @@ class CustomDataSet4Veri776_withviewpont(Dataset):
     def get_image_path(self, idx):
         return os.path.join(self.root_dir, self.names[idx])
 
+    def get_name(self, idx):
+        return self.names[idx]
+
+    def get_label_count(self, label: int):
+        return len([1 for lbl in self.labels if label == lbl])
+
+    def get_unique_label_count(self, label: int):
+        return len(set(self.labels))
+
     def __len__(self):
         return len(self.names)
 

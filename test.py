@@ -161,9 +161,9 @@ def test_single_image(
     top_matches_dir = os.path.join(test_dir, "top_matches")
     os.makedirs(top_matches_dir, exist_ok=True)
     matches_dist = {}
-    for rank, idx in enumerate(
-        sorted_indices[:30]
-    ):  # Save top 30 matches, since some are very similar
+    # Save top 30 since some are very similar
+    for rank, idx in enumerate(sorted_indices[:30]):
+        # `json` cannot handle all `np` types
         matches_dist[f"rank_{rank + 1}"] = float(distmat[0][idx])
         match_image_path = image_paths[idx]
         match_save_path = os.path.join(top_matches_dir, f"rank_{rank + 1}.jpg")
