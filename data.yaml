@@ -1,0 +1,18 @@
+path: /kaggle/working/vehicle-detection-3
+test: test/images
+train: train/images
+val: valid/images
+names:
+    - bus
+    - car
+    - microbus
+    - motorbike
+    - pickup-van
+    - truck
+nc: 6
+roboflow:
+    license: CC BY 4.0
+    project: vehicle-detection-by9xs
+    url: https://universe.roboflow.com/lynkeus03/vehicle-detection-by9xs/dataset/3
+    version: 3
+    workspace: lynkeus03
